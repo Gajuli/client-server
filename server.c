@@ -42,7 +42,8 @@ int main()
 		if (!strcmp(message,"halt")) 
 		{
 			close(server_sockfd); system("date>>jj.txt"); 
-			system("echo 'работа завершена\n'>>jj.txt"); 
+			system("echo 'работа завершена\n'>>jj.txt"); /*да, я не знаю, как объединнить несколько вызовов в 
+			один(*/
 			break;
 		}
 		else
@@ -51,7 +52,9 @@ int main()
 			system("date>>jj.txt"); 
 			fs1 = open("jj.txt", O_WRONLY);
 			k=lseek(fs1, 0,SEEK_END);
-			int i=0; while (message[i]!='\00') i++;
+			int i=0; while (message[i]!='\00') i++; /*это крч он смотрит, сколько символов в этом массиве
+			чтоб пустые не передаваать. я хотел сначала сделать, чтоб клиент скидывал размер сообщения, а 
+			потом создавался бы динамический массив, но в си он создается как-то иначе и я забил*/
 			write(fs1, message, i);	system("echo '\n'>>jj.txt");
 			close(fs1);
 		}
