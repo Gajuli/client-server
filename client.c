@@ -11,7 +11,9 @@ int main()
 	int len;
 	struct sockaddr_un address;
 	int result;
-	char ch = 'A';
+	char message[40]={0};
+	
+
 	/*создается соккет клиента*/
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	/**/
@@ -22,15 +24,17 @@ int main()
 	result = connect(sockfd, (struct sockaddr *)&address, len);
  	if (result == -1) 
 	{
-  		perror("oops : client");
+  		perror("servak ne zapush'en");
   		exit(1);
  	}
 	sockfd
 	:
- 	write(sockfd, &ch, 1);
- 	read(sockfd, &ch, 1);
- 	printf("char from server = %c\n", ch);
- 	close(sockfd);
+		scanf("%s",message);
+ 		write(sockfd, &message, 40);
+ 		//read(sockfd, &message, 40);
+ 		//printf("char from server = %s\n", message);
+ 		close(sockfd);
+	
  	exit(0);
 }
 
