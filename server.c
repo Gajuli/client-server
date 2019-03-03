@@ -1,9 +1,18 @@
 #include "include/connection.h"
 #include "include/server.h"
 
+static void create_daemon();
+
 int main(int argc, char *argv[]) 
 {
- 	server();
+	create_daemon();
+	
+	while(1)
+	{
+		server();
+		sleep(20);
+		break;
+	}
  	
  	return 0;
 }
@@ -18,14 +27,14 @@ int server()
 	if (server_sockfd == -1)
 	{
 		perror("Failed to create a server socket");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	
 	server_address.sun_family = AF_UNIX;
 	if (!strcpy(server_address.sun_path, SOCKET_NAME))
 	{
 		perror("Failed to copy a server socket's name");
-		exit(2);
+		exit(EXIT_FAILURE);
 	}
 	
 	result = bind(server_sockfd, (struct sockaddr *)&server_address,
@@ -33,14 +42,14 @@ int server()
 	if (result == -1)
 	{
 		perror("Failed to bind a name to a server socket");
-		exit(3);
+		exit(EXIT_FAILURE);
 	}
 	
 	result = listen(server_sockfd, NCLIENTS);
 	if (result == -1)
 	{
 		perror("Failed to listen for connections");
-		exit(4);
+		exit(EXIT_FAILURE);
 	}
 	
 	write_to_journal("Server running");
@@ -101,4 +110,47 @@ int write_to_journal(char *message)
 	system(buffer);
 	
 	return 0;
+}
+
+static void create_daemon()
+{
+	pid_t pid;
+	int x;
+	
+	pid = fork();
+	
+	if (pid < 0)
+	{
+		exit(EXIT_FAILURE);
+	}
+	
+	if (pid > 0)
+	{
+		exit(EXIT_SUCCESS);
+	}
+	
+	if (setsid() < 0)
+	{
+		exit(EXIT_FAILURE);
+	}
+	
+	pid = fork();
+	
+	if (pid < 0)
+	{
+		exit(EXIT_FAILURE);
+	}
+	
+	if (pid > 0)
+	{
+		exit(EXIT_SUCCESS);
+	}
+	
+	umask(0);
+	chdir("/");
+	
+    for (x = sysconf(_SC_OPEN_MAX); x >= 0; x--)
+    {
+        close (x);
+    }
 }
