@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #define SOCKET_NAME      "/tmp/connection.sock"
-#define JOURNAL          "journal.txt"
+#define JOURNAL          "/tmp/journal.txt"
 #define KILLER_MESSAGE   "Hande hoch"  
 #define MAX_MESSAGE_SIZE 100
 
