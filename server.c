@@ -97,7 +97,7 @@ int write_to_journal(char *message)
 	char buffer[MAX_MESSAGE_SIZE];
 	
 	snprintf(buffer, MAX_MESSAGE_SIZE,
-		"date >> %s; echo '\%s\n\' >> %s", JOURNAL, message, JOURNAL);
+		"date >> %s; echo \'%s\n\' >> %s", JOURNAL, message, JOURNAL);
 	system(buffer);
 	
 	return 0;
