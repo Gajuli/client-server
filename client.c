@@ -9,27 +9,27 @@ int main(int argc, char *argv[])
 	if (argc < 2)
 	{
 		perror("Message is required. Usage: ./client \'message\'\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	
 	if (!strncpy(message, argv[1], MAX_MESSAGE_SIZE))
 	{
 		perror("Failed to copy a message");
-		exit(2);
+		exit(EXIT_FAILURE);
 	}
 	
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sockfd == -1)
 	{
 		perror("Failed to create a socket");
-		exit(3);
+		exit(EXIT_FAILURE);
 	}
 	
 	address.sun_family = AF_UNIX;
  	if(!strcpy(address.sun_path, SOCKET_NAME))
  	{
 		perror("Failed to copy a socket's name");
-		exit(4);
+		exit(EXIT_FAILURE);
 	}
  	
 	result = connect(sockfd, (struct sockaddr *)&address,
@@ -37,14 +37,14 @@ int main(int argc, char *argv[])
  	if (result == -1) 
 	{
   		perror("Connection failed");
-  		exit(5);
+  		exit(EXIT_FAILURE);
  	}
  	
 	result = send(sockfd, message, sizeof(message), 0);
 	if (result == -1)
 	{
 		perror("Failed to send a data");
-		exit(6);
+		exit(EXIT_FAILURE);
 	}
 	
 	close(sockfd);
