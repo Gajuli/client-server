@@ -1,65 +1,104 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <stdio.h>
-#include <sys/un.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
+#include "include/connection.h"
+#include "include/server.h"
 
-int main() 
+int main(int argc, char *argv[]) 
 {
-	int server_sockfd, client_sockfd;
-	int server_len, client_len;
+ 	server();
+ 	
+ 	return 0;
+}
+
+int server()
+{
+	int server_sockfd, result;
 	struct sockaddr_un server_address;
-	struct sockaddr_un client_address;
-/*удаляем старые, создаем новый*/
-	unlink("server_socket");
+	
+	unlink(SOCKET_NAME);
 	server_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-/*присвоить имя*/
-	server_address.sun_family = AF_UNIX;
- 	strcpy(server_address.sun_path, "server_socket");
- 	server_len = sizeof(server_address);
- 	bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
-/*ждемс*/
-	system("date>>jj.txt"); system("echo 'сервер запущен\n'>>jj.txt");
-	listen(server_sockfd, 5);
- 	while(1) 
+	if (server_sockfd == -1)
 	{
-  		char message[40];
-		printf("server waiting\n");
-/*принимаем запрос*/
-		client_len = sizeof(client_address);
-  		client_sockfd = accept(server_sockfd,
-   		(struct sockaddr *)&client_address, &client_len);
-/*читаем данные клиента*/
-		client_sockfd
-		:
-		
-		//memset(message,' ',40);
-  		read(client_sockfd, &message, 40);
-  		//printf("%s", message);
-		if (!strcmp(message,"halt")) 
+		perror("Failed to create a server socket");
+		exit(1);
+	}
+	
+	server_address.sun_family = AF_UNIX;
+	if (!strcpy(server_address.sun_path, SOCKET_NAME))
+	{
+		perror("Failed to copy a server socket's name");
+		exit(2);
+	}
+	
+	result = bind(server_sockfd, (struct sockaddr *)&server_address,
+				sizeof(server_address));
+	if (result == -1)
+	{
+		perror("Failed to bind a name to a server socket");
+		exit(3);
+	}
+	
+	result = listen(server_sockfd, NCLIENTS);
+	if (result == -1)
+	{
+		perror("Failed to listen for connections");
+		exit(4);
+	}
+	
+	write_to_journal("Server running");
+	wait_for_data(server_sockfd);
+	
+	close(server_sockfd);
+	
+	return 0;
+}
+
+int wait_for_data(int server_sockfd)
+{
+	int client_sockfd, result;
+	char buffer[MAX_MESSAGE_SIZE];
+	
+	while(1)
+	{
+		client_sockfd = accept(server_sockfd, NULL, NULL);
+		if (client_sockfd == -1)
 		{
-			close(server_sockfd); system("date>>jj.txt"); 
-			system("echo 'работа завершена\n'>>jj.txt"); /*да, я не знаю, как объединнить несколько вызовов в 
-			один(*/
-			break;
+			perror("Failed to accept a connection");
+			return -1;
+		}
+		
+		result = recv(client_sockfd, buffer, MAX_MESSAGE_SIZE, 0);
+		if (result == -1)
+		{
+			perror("Failed to receive a message");
+			close(client_sockfd);
+			return -1;
+		}
+		
+		result = strcmp(KILLER_MESSAGE, buffer);
+		if (result == 0)
+		{
+			write_to_journal("Server is closed");
+			close(client_sockfd);
+			return 0;
 		}
 		else
 		{
-			int fs1,k;
-			system("date>>jj.txt"); 
-			fs1 = open("jj.txt", O_WRONLY);
-			k=lseek(fs1, 0,SEEK_END);
-			int i=0; while (message[i]!='\00') i++; /*это крч он смотрит, сколько символов в этом массиве
-			чтоб пустые не передаваать. я хотел сначала сделать, чтоб клиент скидывал размер сообщения, а 
-			потом создавался бы динамический массив, но в си он создается как-то иначе и я забил*/
-			write(fs1, message, i);	system("echo '\n'>>jj.txt");
-			close(fs1);
+			write_to_journal(buffer);
 		}
-  		//write(client_sockfd, &message, 40);
-  		close(client_sockfd);
 		
- 	}
+		close(client_sockfd);
+	}
+	
+	write_to_journal("Server is closed");
+	return 0;
+}
+
+int write_to_journal(char *message)
+{
+	char buffer[MAX_MESSAGE_SIZE];
+	
+	snprintf(buffer, MAX_MESSAGE_SIZE,
+		"date >> %s; echo '\%s\n\' >> %s", JOURNAL, message, JOURNAL);
+	system(buffer);
+	
+	return 0;
 }
