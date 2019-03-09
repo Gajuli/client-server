@@ -7,12 +7,7 @@ int main(int argc, char *argv[])
 {
 	create_daemon();
 	
-	while(1)
-	{
-		server();
-		sleep(20);
-		break;
-	}
+	server();
  	
  	return 0;
 }
